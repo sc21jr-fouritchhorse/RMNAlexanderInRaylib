@@ -1,4 +1,5 @@
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <raylib.h>
 #include <cmath>
 #include <math.h>
@@ -21,8 +22,10 @@ typedef struct bone
     float drawThickness;
     void applyFK(bone *parent, float alpha);
     //void applyIK(bone *child, float alpha);
-
+    struct bone& operator=(const bone& boneCopy);
 } Bone;
+
+
 
 
 
@@ -36,7 +39,8 @@ class Worm
         void Update();
         void Draw();
         const static int boneCount = MAX_SEGMENTS;
-        void SetRootPos(vec2 pos, float angle);
+        void SetRootPos(vec2 pos);
+        void SetRootAngle(float angle);
         vec2 GetRootPos();
         float GetRootAngle();
     private:

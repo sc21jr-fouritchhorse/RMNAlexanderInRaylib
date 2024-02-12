@@ -2,15 +2,25 @@
 #include <cmath>
 #include <iostream>
 
-void Bone::applyFK(bone *parent, float alpha)
+
+Bone& Bone::operator=(const bone& boneCopy)
 {
-    startCoord = parent->endCoord;
-    angle = glm::mix(parent->angle, angle, alpha);
-    endCoord = vec2{startCoord.x + length * cosf(angle), startCoord.y + length * sinf(angle)};
+    Bone *newBone = new Bone();
+    newBone->startCoord = boneCopy.startCoord;
+    newBone->endCoord = boneCopy.endCoord;
+    newBone->angle = boneCopy.angle;
+    newBone->length = boneCopy.length;
+    newBone->damping = boneCopy.damping;
+    newBone->drawThickness = boneCopy.drawThickness;
+    return *newBone;
 }
 
-
-
+void Bone::applyFK(bone* parent, float alpha)
+{
+    startCoord = parent->endCoord;
+    angle = glm::mix(angle, parent->angle, alpha);
+    endCoord = vec2{startCoord.x + length * cosf(angle), startCoord.y + length * sinf(angle)};
+}
 
 std::ostream &operator<<(std::ostream &os, const bone &b)
 {
@@ -36,7 +46,7 @@ void Worm::Init(vec2 origin, float d, float cdf, float a, float l, float theta, 
     root->damping = d;
     root->drawThickness = t;
     cumulativeDampingFactor = cdf;
-    angleBlend = a; // Assign a value to angleBlend
+    angleBlend = a; 
     float cumulativeDamping = 1.0f;
     bones[0] = root;
     float inverseBC = 1.f / boneCount;
@@ -54,10 +64,18 @@ void Worm::Init(vec2 origin, float d, float cdf, float a, float l, float theta, 
     }
 }
 
-void Worm::SetRootPos(vec2 pos, float angle)
+void Worm::SetRootPos(vec2 pos)
 {
-    bones[0]->applyFK(new Bone{bones[0]->startCoord, {pos.x, pos.y}, 
-    bones[0]->length, angle, bones[0]->damping, 0}, angleBlend);
+    Bone *targetBone = bones[0];
+    targetBone->endCoord = pos; 
+    bones[0]->applyFK(targetBone, angleBlend);
+}
+
+void Worm::SetRootAngle(float angle)
+{
+    Bone *targetBone = bones[0];
+    targetBone->angle = angle;
+    bones[0]->applyFK(targetBone, angleBlend);   
 }
 
 vec2 Worm::GetRootPos()
@@ -79,28 +97,20 @@ void Worm::Update()
             auto parents_b = parents.equal_range(b);
             for (auto iter = parents_b.first; iter != parents_b.second; ++iter)
             {
-                std::cout << std::endl;
-                std::cout << b->angle;
                 Bone * parent_b = iter->second;
-                std::cout << " => ";
                 b->applyFK(parent_b, angleBlend);
-                std::cout << b->angle;
-                std::cout << std::endl;
             }
         }
     }
 }
+
 
 void Worm::Draw()
 {
     for (auto b : bones)
     {   
         vec2 b_center = 0.5f * (b->endCoord + b->startCoord);
-        float triangleAngle = b->angle + PI * 2.125f;
-        if (triangleAngle > 2 * PI)
-        {
-            triangleAngle -= 2 * PI;
-        }
+        float triangleAngle = 180.f / PI * (b->angle - (PI * 0.375f));
         DrawPolyLines({std::abs(b_center.x), std::abs(b_center.y)}, 3, b->drawThickness, triangleAngle, BLACK);
     }
 }

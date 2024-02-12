@@ -42,7 +42,7 @@ public:
     {
         userX = currW * 0.5f;
         userY = currH * 0.5f;
-        theWorm.Init({currW, currH}, 0.9f, 0.5f, 0.9f, (currW * 0.5f) / theWorm.boneCount, 0.0f, (currH * 0.75f) / theWorm.boneCount);
+        theWorm.Init({userX, userY}, 0.9f, 0.999f, 0.25f, (currW * (1.0f / theWorm.boneCount)), 0.0f, 0.5f * (currH * (1.0f / theWorm.boneCount)));
     }
 
     void Update()
@@ -51,33 +51,10 @@ public:
         vec2 lastPos = theWorm.GetRootPos();
         vec2 userDisplacement = (userPos - lastPos);
 
-        float newAngle = theWorm.GetRootAngle();
+        theWorm.SetRootPos(userPos);
 
-        if (length(userDisplacement) != 0.f)
-        {
-            if (length(userDisplacement) < 0.f)
-                newAngle = atan2f(userDisplacement.y, userDisplacement.x);
-            else
-                newAngle = atan2f(-userDisplacement.y, -userDisplacement.x);
-        }
-
-        if (userY  > currH)
-        {
-            userY = currH;
-            newAngle -= PI;
-            newAngle *= -1.f;
-            userDisplacement *= -1.f;
-        }
-
-        if (userX > currW)
-        {
-            userX = currW;
-            newAngle -= PI;
-            newAngle *= -1.f;
-            userDisplacement *= -1.f;
-        }
-
-        theWorm.SetRootPos({userX, userY}, newAngle);
+        if(length(userDisplacement) != 0.0f)
+            theWorm.SetRootAngle(atan2f(-userDisplacement.y, -userDisplacement.x));
 
         theWorm.Update();
 
